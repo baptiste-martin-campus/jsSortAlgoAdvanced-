@@ -3,6 +3,22 @@ let listVille = [];
 let nbPermutation = 0;
 let nbComparaison = 0;
 
+var axios = require('axios');
+
+var config = {
+  method: 'get',
+  url: 'https://maps.googleapis.com/maps/api/distancematrix/json?origins=Washington%2C%20DC&destinations=New%20York%20City%2C%20NY&units=imperial&key=YOUR_API_KEY',
+  headers: { }
+};
+
+axios(config)
+.then(function (response) {
+  console.log(JSON.stringify(response.data));
+})
+.catch(function (error) {
+  console.log(error);
+});
+
 document.querySelector("#read-button").addEventListener('click', function() {
   csvFile = document.querySelector("#file-input").files[0];
   let reader = new FileReader();
@@ -68,15 +84,15 @@ function distanceFromGrenoble(ville) {
   const lat1 = 45.188529;
   const lon1 = 5.724524;
   const R = 6371e3; // metres
-  const φ1 = lat1 * Math.PI/180; // φ, λ in radians
-  const φ2 = lat2 * Math.PI/180;
-  const Δφ = (lat2-lat1) * Math.PI/180;
-  const Δλ = (lon2-lon1) * Math.PI/180;
+  const φ1 = lat1 * Math.PI / 180; // φ, λ in radians
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
 
-  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ/2) * Math.sin(Δλ/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   const d = R * c; // in metres
   return d;
@@ -90,9 +106,7 @@ function distanceFromGrenoble(ville) {
  * @return vrai si la ville i est plus proche
  */
 function isLess(i, j) {
-  if (listVille[i] < listVille[j]) {
-    return true;
-  }
+  return i.distanceFromGrenoble < j.distanceFromGrenoble;
 }
 
 /**
@@ -101,10 +115,8 @@ function isLess(i, j) {
  * @param {*} j
  */
 function swap(i, j) {
-  let temp;
-  temp = i;
-  i = j;
-  j = temp;
+  [listVille[i], listVille[j]] = [listVille[j], listVille[i]];
+  nbPermutation++;
 }
 
 function sort(type) {
@@ -113,63 +125,181 @@ function sort(type) {
       insertsort(listVille);
       break;
     case 'select':
-      selectionsort();
+      selectionsort(listVille);
       break;
     case 'bubble':
-      bubblesort();
+      bubblesort(listVille);
       break;
     case 'shell':
-      shellsort();
+      shellsort(listVille);
       break;
     case 'merge':
-      mergesort();
+      listVille = mergesort(listVille);
       break;
     case 'heap':
-      heapsort();
+      heapsort(listVille);
       break;
     case 'quick':
-      quicksort();
+      quicksort(listVille);
       break;
   }
 }
 
-function insertsort(listVille) {
-    let n = listVille.length
-    for (let i = 1; i < n; i++) {
-      let temp = listVille[i];
-      let j = i;
-      while (j > 0 && listVille[j - 1] > temp) {
-        listVille[j] = listVille[j - 1]
-        j = j - 1;
-      }
-      listVille[j] = temp;
+function insertsort() {
+  let n = listVille.length
+  for (let i = 1; i < n; i++) {
+    let temp = listVille[i];
+    let j = i;
+    while (j > 0 && isLess(temp, listVille[j - 1])) {
+      nbPermutation++
+      listVille[j] = listVille[j - 1]
+      j = j - 1;
     }
+    listVille[j] = temp;
   }
+}
 
 function selectionsort() {
-  console.log("selectionsort - implement me !");
+  let n = listVille.length;
+  let min;
+  for (let i = 0; i < n; i++) {
+    min = i;
+    for (let j = i + 1; j < n; j++) {
+      if (isLess(listVille[j], listVille[min])) {
+        nbPermutation++
+        min = j;
+      }
+    }
+    swap(i, min);
+  }
 }
 
 function bubblesort() {
-  console.log("bubblesort - implement me !");
+  let passage = 0;
+  let permut = true;
+  let n = listVille.length;
+  while (permut == true) {
+    permut = false;
+    passage++;
+    for (let i = 0; i < n - passage; i++) {
+      if (isLess(listVille[i + 1], listVille[i])) {
+        nbPermutation++
+        swap(i, i + 1);
+        permut = true;
+      }
+    }
+  }
 }
 
 function shellsort() {
-  console.log("shellsort - implement me !");
+  let longueur = listVille.length;
+  let n = 0;
+  while (n < longueur) {
+    n = 3 * n + 1;
+  }
+  while (n != 0) {
+    n = Math.floor(n / 3);
+    for (let i = n; i < longueur; i++) {
+      let valeur = listVille[i];
+      let j = i;
+      while ((j > n - 1) && isLess(valeur, listVille[j - n])) {
+        nbPermutation++
+        listVille[j] = listVille[j - n];
+        j = j - n;
+      }
+      listVille[j] = valeur;
+    }
+  }
 }
 
-function mergesort() {
-  console.log("mergesort - implement me !");
+function mergesort(listVille) {
+  let n = listVille.length;
+  let mid = Math.floor(n / 2);
+  if (n <= 1) {
+    return listVille
+  } else {
+    nbPermutation++
+    let left = listVille.slice(0, mid);
+    let right = listVille.slice(mid);
+    return fusion(mergesort(left), mergesort(right));
+  }
 }
 
-
-function heapsort() {
-  console.log("heapsort - implement me !");
+function fusion(left, right) {
+  let result = [];
+  if (left.length === 0) {
+    return right;
+  } else if (right.length === 0) {
+    return left;
+  } else if (isLess(left[0], right[0])) {
+    result.push(left[0]);
+    return result.concat(fusion(left.slice(1), right))
+  } else {
+    result.push(right[0]);
+    return result.concat(fusion(left, right.slice(1)))
+  }
 }
 
-function quicksort() {
-  console.log("quicksort - implement me !");
+function heapsort(listVille) {
+  let longueur = listVille.length;
+  organiser(listVille);
+  for (let i = longueur - 1; i > 0; i--) {
+    swap(0, i);
+    redescendre(listVille, i, 0)
+  }
 }
+
+function organiser(listVille) {
+  let longueur = listVille.length;
+  for (let i = 0; i < longueur - 1; i++) {
+    remonter(listVille, i)
+  }
+}
+
+function remonter(listVille, index) {
+  if (isLess(listVille[Math.floor(index / 2)], listVille[index])) {
+    swap(index, Math.floor(index / 2));
+    remonter(listVille, Math.floor(index / 2));
+  }
+}
+
+function redescendre(listVille, element, index) {
+  let max;
+  let formule = 2 * index + 1;
+  if (formule < element) {
+    if (isLess(listVille[2 * index], listVille[formule])) {
+      max = formule;
+    } else {
+      max = 2 * index;
+    }
+    if (isLess(listVille[index], listVille[max])) {
+      swap(max, index);
+      redescendre(listVille, element, max);
+    }
+  }
+}
+
+function quicksort(listVille, first = 0, last = listVille.length - 1) {
+    if (first < last) {
+      pi = partitionner(listVille, first, last)
+      quicksort(listVille, first, pi-1)
+      quicksort(listVille, pi + 1, last)
+    }
+    return listVille;
+  }
+
+  function partitionner(listVille, first, last){
+    let pivot = last;
+    let j = first;
+    for (let i = first; i < last; i++) {
+      if (isLess(listVille[i], listVille[pivot])) {
+        swap(i, j);
+        j++;
+      }
+    }
+    swap(last, j)
+    return j;
+  }
 
 /** MODEL */
 
